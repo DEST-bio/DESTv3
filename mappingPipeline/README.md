@@ -1,8 +1,19 @@
 # Scripts to download, map, call polymorphism in pooled sequencing data-sets for Drosophila
 
+
+## Changes to Version 3.0 (Fall 2025)
+More flexibility on the reference genome
+
+rebuild docker with
+```
+docker buildx create --use --name mybuilder
+docker buildx build --builder mybuilder --platform linux/amd64 -t dest_v3 -f Dockerfile.3.0.0 ~/.
+```
+
+
 ## Changes in Version 2.0 (Spring 2023)
 
-**NEW!** The flag `--single_end` allows for the processing of single end (SE) reads  
+**NEW!** The flag `--single_end` allows for the processing of single end (SE) reads
 
 ## Description
 
