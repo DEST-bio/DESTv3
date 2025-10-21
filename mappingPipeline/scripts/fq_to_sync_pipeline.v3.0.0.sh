@@ -143,6 +143,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    -prepRef|--prep_reference)
+    prepRef=$2
+    shift # past argument
+    shift # past value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") #save it to an array
     shift
@@ -214,7 +219,7 @@ echo -e \
 "min cov =" $min_cov "\n" \
 "theta =" $theta "\n" \
 "D =" $D "\n" \
-"priot =" $priortype "\n" \
+"prior =" $priortype "\n" \
 "folded? =" $fold "\n" \
 "max snape ="$maxsnape "\n" \
 "base quality threshold =" $base_quality_threshold "\n" \
@@ -224,7 +229,8 @@ echo -e \
 "do snape? (0 = no; 1 = yes) -->" $do_snape "\n" \
 "do poolsnp? (0 = no; 1 = yes) -->" $do_poolsnp "\n" \
 "reference genome =" $ref "\n" \
-"focal chromosome file=" $focal_file "\n"
+"focal chromosome file=" $focal_file "\n" \
+"prep ref?=" $prepRef "\n"
 
 ########
 
@@ -261,31 +267,32 @@ fi
 #################
 ### prepare reference genome
 ### module load samtools bwa picard
-ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
-PICARD=$EBROOTPICARD/picard.jar
-focalFile=/scratch/aob2x/tmpRef/focalFile.csv
-if [ ! -f ${ref}.amb ]; then bwa index ${ref}; fi
-if [ ! -f ${ref}.fai ]; then samtools faidx ${ref}; fi
-if [ ! -f ${ref}.dict ]; then
-  refDict=$( echo ${ref} | sed 's/fa/dict/g' )
-  java -jar $PICARD CreateSequenceDictionary R=${ref} O=${refDict}
+# ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
+# PICARD=$EBROOTPICARD/picard.jar
+# focalFile=/scratch/aob2x/tmpRef/focalFile.csv
+if [ $prepRef -eq "1" ]; then
+  if [ ! -f ${ref}.amb ]; then bwa index ${ref}; fi
+  if [ ! -f ${ref}.fai ]; then samtools faidx ${ref}; fi
+  if [ ! -f ${ref}.dict ]; then
+    refDict=$( echo ${ref} | sed 's/fa/dict/g' )
+    java -jar $PICARD CreateSequenceDictionary R=${ref} O=${refDict}
+  fi
+
+  while read p; do
+     #prefix=mel
+     prefix=$( echo $p | cut -f1 -d',')
+     echo $prefix
+     chrs=$( echo $p | cut -f2 -d',')
+     echo $chrs
+     refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
+     samtools faidx ${ref} ${chrs} > ${refOut}
+
+     python ~/DESTv3/mappingPipeline/scripts/PickleRef.py \
+         --ref ${refOut} \
+         --output ${refOut}
+  done < ${focalFile}
+  exit
 fi
-
-while read p; do
-   prefix=mel
-   chrs=2L
-   prefix=$( echo $p | cut -f1 -d',')
-   echo $prefix
-   chrs=$( echo $p | cut -f2 -d',')
-   echo $chrs
-   refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
-   samtools faidx ${ref} ${chrs} > ${refOut}
-
-   python /scratch/aob2x/tmpRef/pickle.ref \
-       --ref ${refOut} \
-       --output ${refOut}
-   
-done < ${focalFile}
 
 ##### Begin prep
 #### Single end case
@@ -451,142 +458,155 @@ fi
   # grep "sim_" $output/$sample/${sample}.${sample}.original_idxstats.txt | awk -F '\t' '{sum+=$3;} END {print sum;}' > $output/$sample/${sample}.num_sim.txt
 
   #Filter out the simulans contaminants
-  mel_chromosomes="2L 2R 3L 3R 4 X Y mitochondrion_genome"
-  sim_chromosomes="sim_2L sim_2R sim_3L sim_3R sim_4 sim_X sim_mtDNA"
+  while read p; do
+     #prefix=mel
+     prefix=$( echo $p | cut -f1 -d',')
+     echo $prefix
+     chrs=$( echo $p | cut -f2 -d',')
+     echo $chrs
 
-  samtools view -@ $threads $output/$sample/${sample}.contaminated_realigned.bam $mel_chromosomes -b > $output/$sample/${sample}.mel.bam
-  samtools view -@ $threads $output/$sample/${sample}.contaminated_realigned.bam $sim_chromosomes -b > $output/$sample/${sample}.sim.bam
+     samtools view -@ $threads $output/$sample/${sample}.contaminated_realigned.bam ${chrs} -b > $output/$sample/${sample}.${prefix}.bam
+  done < ${focalFile}
 
   mv $output/$sample/${sample}.contaminated_realigned.bam  $output/$sample/${sample}.original.bam
   rm $output/$sample/${sample}.contaminated_realigned.bai
 
+  samtools index $output/$sample/${sample}.original.bam
   #samtools mpileup $output/$sample/${sample}.mel.bam -B -f /opt/hologenome/raw/D_melanogaster_r6.12.fasta > $output/$sample/${sample}.mel_mpileup.txt
 
   check_exit_status "mpileup" $?
 
 if [ $do_poolsnp -eq "1" ]; then
+  while read p; do
+    prefix=$( echo $p | cut -f1 -d',')
+    echo $prefix
+    chrs=$( echo $p | cut -f2 -d',')
+    echo $chrs
+    refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
 
-  samtools mpileup $output/$sample/${sample}.mel.bam \
-  -B \
-  -Q ${base_quality_threshold} \
-  -f /opt/hologenome/raw/D_melanogaster_r6.12.fasta > $output/$sample/${sample}.mel_mpileup.txt
+    samtools mpileup $output/$sample/${sample}.${prefix}.bam \
+    -B \
+    -Q ${base_quality_threshold} \
+    -f ${refOut} > $output/$sample/${sample}.${prefix}_mpileup.txt
 
+    python3 /opt/DESTv2/mappingPipeline/scripts/Mpileup2Sync.py \
+    --mpileup $output/$sample/${sample}.${prefix}_mpileup.txt \
+    --ref ${refOut}.ref \
+    --output $output/$sample/${sample}.${prefix} \
+    --base-quality-threshold $base_quality_threshold \
+    --coding $illumina_quality_coding \
+    --minIndel $minIndel
 
-  python3 /opt/DESTv2/mappingPipeline/scripts/Mpileup2Sync.py \
-  --mpileup $output/$sample/${sample}.mel_mpileup.txt \
-  --ref /opt/hologenome/raw/D_melanogaster_r6.12.fasta.pickled.ref \
-  --output $output/$sample/${sample} \
-  --base-quality-threshold $base_quality_threshold \
-  --coding $illumina_quality_coding \
-  --minIndel $minIndel
+    check_exit_status "Mpileup2Sync" $?
 
-  check_exit_status "Mpileup2Sync" $?
+    #For the PoolSNP output
+    python3 /opt/DESTv2/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
+    --sync $output/$sample/${sample}.${prefix}.sync.gz \
+    --output $output/$sample/${sample}.${prefix} \
+    --indel $output/$sample/${sample}.${prefix}.indel \
+    --coverage $output/$sample/${sample}.${prefix}.cov \
+    --mincov $min_cov \
+    --maxcov $max_cov \
+    --maxsnape $maxsnape
 
-  #For the PoolSNP output
-  python3 /opt/DESTv2/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
-  --sync $output/$sample/${sample}.sync.gz \
-  --output $output/$sample/${sample} \
-  --indel $output/$sample/${sample}.indel \
-  --coverage $output/$sample/${sample}.cov \
-  --mincov $min_cov \
-  --maxcov $max_cov \
-  --te /opt/DESTv2/mappingPipeline/RepeatMasker/ref/dmel-all-chromosome-r6.12.fasta.out.gff \
-  --maxsnape $maxsnape
+    check_exit_status "MaskSYNC" $?
 
-  check_exit_status "MaskSYNC" $?
+    mv $output/$sample/${sample}.${prefix}_masked.sync.gz $output/$sample/${sample}.${prefix}.masked.sync.gz
+    gunzip $output/$sample/${sample}.${prefix}.masked.sync.gz
+    bgzip $output/$sample/${sample}.${prefix}.masked.sync
+    tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.${prefix}.masked.sync.gz
 
-  # gzip $output/$sample/${sample}.cov
-  # gzip $output/$sample/${sample}.indel
+    check_exit_status "tabix" $?
 
-  mv $output/$sample/${sample}_masked.sync.gz $output/$sample/${sample}.masked.sync.gz
-  gunzip $output/$sample/${sample}.masked.sync.gz
-  bgzip $output/$sample/${sample}.masked.sync
-  tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.masked.sync.gz
+    #rm $output/$sample/${sample}.${prefix}_mpileup.txt
 
-  check_exit_status "tabix" $?
-
-  echo "Read 1: $read1" >> $output/$sample/${sample}.parameters.txt
-  echo "Read 2: $read2" >> $output/$sample/${sample}.parameters.txt
-  echo "Sample name: $sample" >> $output/$sample/${sample}.parameters.txt
-  echo "Output directory: $output" >> $output/$sample/${sample}.parameters.txt
-  echo "Number of cores used: $threads" >> $output/$sample/${sample}.parameters.txt
-  echo "Max cov: $max_cov" >> $output/$sample/${sample}.parameters.txt
-  echo "Min cov $min_cov" >> $output/$sample/${sample}.parameters.txt
-  echo "base-quality-threshold $base_quality_threshold" >> $output/$sample/${sample}.parameters.txt
-  echo "illumina-quality-coding $illumina_quality_coding" >> $output/$sample/${sample}.parameters.txt
-  echo "min-indel $minIndel" >> $output/$sample/${sample}.parameters.txt
-
+    echo "Read 1: $read1" >> $output/$sample/${sample}.parameters.txt
+    echo "Read 2: $read2" >> $output/$sample/${sample}.parameters.txt
+    echo "Sample name: $sample" >> $output/$sample/${sample}.parameters.txt
+    echo "Output directory: $output" >> $output/$sample/${sample}.parameters.txt
+    echo "Number of cores used: $threads" >> $output/$sample/${sample}.parameters.txt
+    echo "Max cov: $max_cov" >> $output/$sample/${sample}.parameters.txt
+    echo "Min cov $min_cov" >> $output/$sample/${sample}.parameters.txt
+    echo "base-quality-threshold $base_quality_threshold" >> $output/$sample/${sample}.parameters.txt
+    echo "illumina-quality-coding $illumina_quality_coding" >> $output/$sample/${sample}.parameters.txt
+    echo "min-indel $minIndel" >> $output/$sample/${sample}.parameters.txt
+    echo "species prefix ${prefix}" >> >> $output/$sample/${sample}.parameters.txt
+  done < ${focalFile}
 fi
 
 #Generate the SNAPE SYNC files
 if [ $do_snape -eq "1" ]; then
+  while read p; do
+    prefix=$( echo $p | cut -f1 -d',')
+    echo $prefix
+    chrs=$( echo $p | cut -f2 -d',')
+    echo $chrs
+    refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
 
-  /opt/DESTv2/mappingPipeline/scripts/Mpileup2Snape.sh \
-  ${sample}.mel_mpileup.txt \
-  $output \
-  $sample \
-  $theta \
-  $D \
-  $priortype \
-  $fold \
-  $nflies
+    /opt/DESTv2/mappingPipeline/scripts/Mpileup2Snape.sh \
+    ${sample}.${prefix}_mpileup.txt \
+    $output \
+    $sample.${prefix} \
+    $theta \
+    $D \
+    $priortype \
+    $fold \
+    $nflies
 
-  check_exit_status "Mpileup2SNAPE" $?
+    check_exit_status "Mpileup2SNAPE" $?
 
-  gzip -f $output/$sample/${sample}.SNAPE.output.txt
+    gzip -f $output/$sample/${sample}.${prefix}.SNAPE.output.txt
 
-  python3 /opt/DESTv2/mappingPipeline/scripts/SNAPE2SYNC.py \
-  --input $output/$sample/${sample}.SNAPE.output.txt.gz \
-  --ref /opt/hologenome/raw/D_melanogaster_r6.12.fasta.pickled.ref \
-  --output $output/$sample/${sample}.SNAPE
+    python3 /opt/DESTv2/mappingPipeline/scripts/SNAPE2SYNC.py \
+    --input $output/$sample/${sample}.${prefix}.SNAPE.output.txt.gz \
+    --ref ${refOut} \
+    --output $output/$sample/${sample}.${prefix}.SNAPE
 
-  check_exit_status "SNAPE2SYNC" $?
+    check_exit_status "SNAPE2SYNC" $?
 
-  python3 /opt/DESTv2/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
-  --sync $output/$sample/${sample}.SNAPE.sync.gz \
-  --output $output/$sample/${sample}.SNAPE.complete \
-  --indel $output/$sample/${sample}.indel \
-  --coverage $output/$sample/${sample}.cov \
-  --mincov $min_cov \
-  --maxcov $max_cov \
-  --te /opt/DESTv2/mappingPipeline/RepeatMasker/ref/dmel-all-chromosome-r6.12.fasta.out.gff \
-  --maxsnape $maxsnape \
-  --SNAPE
+    python3 /opt/DESTv2/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
+    --sync $output/$sample/${sample}.${prefix}.SNAPE.sync.gz \
+    --output $output/$sample/${sample}.${prefix}.SNAPE.complete \
+    --indel $output/$sample/${sample}.indel \
+    --coverage $output/$sample/${sample}.cov \
+    --mincov $min_cov \
+    --maxcov $max_cov \
+    --maxsnape $maxsnape \
+    --SNAPE
 
-  check_exit_status "MaskSYNC_SNAPE_Complete" $?
+    check_exit_status "MaskSYNC_SNAPE_Complete" $?
 
-  mv $output/$sample/${sample}.SNAPE.complete_masked.sync.gz $output/$sample/${sample}.SNAPE.complete.masked.sync.gz
+    mv $output/$sample/${sample}.${prefix}.SNAPE.complete_masked.sync.gz $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
 
-  python3 /opt/DESTv2/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
-  --sync $output/$sample/${sample}.SNAPE.sync.gz \
-  --output $output/$sample/${sample}.SNAPE.monomorphic \
-  --indel $output/$sample/${sample}.indel \
-  --coverage $output/$sample/${sample}.cov \
-  --mincov $min_cov \
-  --maxcov $max_cov \
-  --te /opt/DESTv2/mappingPipeline/RepeatMasker/ref/dmel-all-chromosome-r6.12.fasta.out.gff \
-  --maxsnape $maxsnape \
-  --SNAPE
+    python3 /opt/DESTv2/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
+    --sync $output/$sample/${sample}.${prefix}.SNAPE.sync.gz \
+    --output $output/$sample/${sample}.${prefix}.SNAPE.monomorphic \
+    --indel $output/$sample/${sample}.indel \
+    --coverage $output/$sample/${sample}.cov \
+    --mincov $min_cov \
+    --maxcov $max_cov \
+    --maxsnape $maxsnape \
+    --SNAPE
 
-  check_exit_status "MaskSYNC_SNAPE_Monomporphic_Filter" $?
+    check_exit_status "MaskSYNC_SNAPE_Monomporphic_Filter" $?
 
-  mv $output/$sample/${sample}.SNAPE.monomorphic_masked.sync.gz $output/$sample/${sample}.SNAPE.monomorphic.masked.sync.gz
+    mv $output/$sample/${sample}.${prefix}.SNAPE.monomorphic_masked.sync.gz $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
 
-  gunzip $output/$sample/${sample}.SNAPE.complete.masked.sync.gz
-  bgzip $output/$sample/${sample}.SNAPE.complete.masked.sync
-  tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.SNAPE.complete.masked.sync.gz
+    gunzip $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
+    bgzip $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync
+    tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
 
-  gunzip $output/$sample/${sample}.SNAPE.monomorphic.masked.sync.gz
-  bgzip $output/$sample/${sample}.SNAPE.monomorphic.masked.sync
-  tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.SNAPE.monomorphic.masked.sync.gz
+    gunzip $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
+    bgzip $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
+    tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
 
-  check_exit_status "tabix" $?
+    check_exit_status "tabix" $?
 
-  gzip $output/$sample/${sample}.mel_mpileup.txt
+    #gzip $output/$sample/${sample}.mel_mpileup.txt
 
-  echo "Maxsnape $maxsnape" >> $output/$sample/${sample}.parameters.txt
-  echo "theta:  $theta" >> $output/$sample/${sample}.parameters.txt
-  echo "D:  $D" >> $output/$sample/${sample}.parameters.txt
-  echo "priortype: $priortype" >> $output/$sample/${sample}.parameters.txt
-
+    echo "Maxsnape $maxsnape" >> $output/$sample/${sample}.parameters.txt
+    echo "theta:  $theta" >> $output/$sample/${sample}.parameters.txt
+    echo "D:  $D" >> $output/$sample/${sample}.parameters.txt
+    echo "priortype: $priortype" >> $output/$sample/${sample}.parameters.txt
+  done < ${focalFile}
 fi
