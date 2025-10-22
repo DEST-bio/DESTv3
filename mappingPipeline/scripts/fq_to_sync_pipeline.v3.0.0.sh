@@ -158,12 +158,12 @@ done
 #################
 ### prepare reference genome
 ### module load samtools bwa picard
-if [ $prepRef -eq "1" ] && [ $do_poolsnp -eq "1"]; then
+if [ $prepRef -eq "1" ] && [ $do_poolsnp -eq "1" ]; then
   echo "Cannot prep ref and run mapping at once"
   exit 1
 fi
 
-if [ $prepRef -eq "1" ] && [ $do_snape -eq "1"]; then
+if [ $prepRef -eq "1" ] && [ $do_snape -eq "1" ]; then
   echo "Cannot prep ref and run mapping at once"
   exit 1
 fi
