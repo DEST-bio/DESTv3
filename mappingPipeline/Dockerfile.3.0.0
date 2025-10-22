@@ -194,7 +194,7 @@ ENV PATH="/usr/lib/jvm/java-1.8.0-openjdk-amd64/bin:${PATH}"
 #Install snape-pooled
 
 WORKDIR /opt
-RUN git clone https://github.com/EmanueleRaineri/snape-pooled.git && \
+RUN git clone https://github.com/DEST-bio/snape-pooled.git && \
     cd snape-pooled && \
     make snape-pooled
 

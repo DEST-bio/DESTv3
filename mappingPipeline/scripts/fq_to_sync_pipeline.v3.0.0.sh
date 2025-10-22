@@ -32,8 +32,8 @@ base_quality_threshold=25
 illumina_quality_coding=1.8
 minIndel=5
 ###do_prep=1
-do_snape=0
-do_poolsnp=0
+do_snape=1
+do_poolsnp=1
 ref_genome="path_to_ref_fasta"
 focalFile="path_to_focalFile_csv"
 
@@ -46,11 +46,11 @@ key="$1"
 
 case $key in
 	-do_se|--single_end)
-	do_single_end=1
+	  do_single_end=1
     shift # past argument
-	;;
+	  ;;
     -dps|--do_poolsnp)
-    do_poolsnp=1
+    do_poolsnp=$2
     shift # past argument
     ;;
     #-dnp|--do_not_prep)
@@ -154,6 +154,45 @@ case $key in
     ;;
 esac
 done
+
+#################
+### prepare reference genome
+### module load samtools bwa picard
+if [ $prepRef -eq "1" ] && [ $do_poolsnp -eq "1"]; then
+  echo "Cannot prep ref and run mapping at once"
+  exit 1
+fi
+
+if [ $prepRef -eq "1" ] && [ $do_snape -eq "1"]; then
+  echo "Cannot prep ref and run mapping at once"
+  exit 1
+fi
+
+
+if [ $prepRef -eq "1" ]; then
+  if [ ! -f ${ref}.amb ]; then bwa index ${ref}; fi
+  if [ ! -f ${ref}.fai ]; then samtools faidx ${ref}; fi
+  if [ ! -f ${ref}.dict ]; then
+    refDict=$( echo ${ref} | sed 's/fa/dict/g' )
+    java -jar $PICARD CreateSequenceDictionary R=${ref} O=${refDict}
+  fi
+
+  while read p; do
+     #prefix=mel
+     prefix=$( echo $p | cut -f1 -d',')
+     echo $prefix
+     chrs=$( echo $p | cut -f2 -d',')
+     echo $chrs
+     refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
+     samtools faidx ${ref} ${chrs} > ${refOut}
+
+     python /opt/DESTv3/mappingPipeline/scripts/PickleRef.py \
+         --ref ${refOut} \
+         --output ${refOut}
+  done < ${focalFile}
+  exit
+fi
+
 
 #####
 if [ $do_single_end -eq "1" ]
@@ -264,35 +303,6 @@ if [ ! -d $output/$sample/${sample}_fastqc/trimmed ]; then
   mkdir $output/$sample/${sample}_fastqc/trimmed
 fi
 
-#################
-### prepare reference genome
-### module load samtools bwa picard
-# ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
-# PICARD=$EBROOTPICARD/picard.jar
-# focalFile=/scratch/aob2x/tmpRef/focalFile.csv
-if [ $prepRef -eq "1" ]; then
-  if [ ! -f ${ref}.amb ]; then bwa index ${ref}; fi
-  if [ ! -f ${ref}.fai ]; then samtools faidx ${ref}; fi
-  if [ ! -f ${ref}.dict ]; then
-    refDict=$( echo ${ref} | sed 's/fa/dict/g' )
-    java -jar $PICARD CreateSequenceDictionary R=${ref} O=${refDict}
-  fi
-
-  while read p; do
-     #prefix=mel
-     prefix=$( echo $p | cut -f1 -d',')
-     echo $prefix
-     chrs=$( echo $p | cut -f2 -d',')
-     echo $chrs
-     refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
-     samtools faidx ${ref} ${chrs} > ${refOut}
-
-     python ~/DESTv3/mappingPipeline/scripts/PickleRef.py \
-         --ref ${refOut} \
-         --output ${refOut}
-  done < ${focalFile}
-  exit
-fi
 
 ##### Begin prep
 #### Single end case

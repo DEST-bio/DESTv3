@@ -2,12 +2,38 @@
 
 
 ## Changes to Version 3.0 (Fall 2025)
-More flexibility on the reference genome
+More flexibility on the reference genome.
 
-rebuild docker with
+rebuild docker on local computer
 ```
 docker buildx create --use --name mybuilder
-docker buildx build --builder mybuilder --platform linux/amd64 -t dest_v3 -f Dockerfile.3.0.0 ~/.
+docker buildx build --builder mybuilder --platform linux/amd64 -t dest_v3:latest --load -f Dockerfile.3.0.0 .
+docker buildx build --builder mybuilder --platform linux/amd64 -t alanbergland/dest_v3:latest --push -f Dockerfile.3.0.0 .
+```
+
+pull onto Rivanna
+```
+ijob -A berglandlab -c4 -p standard --mem=20G
+module load apptainer/1.3.4
+#apptainer build /scratch/aob2x/dest_v3.sif docker://alanbergland/dest_v3:latest
+
+singularity run \
+/scratch/aob2x/dest_v3.sif  \
+--cores 4 \
+--max-cov 0.95 \
+--min-cov 4 \
+--base-quality-threshold 25 \
+--num-flies 200 \
+--reference_genome /scratch/aob2x/tmpRef/holo_dmel_6.12.fa \
+--focal_file /scratch/aob2x/tmpRef/focalFile.csv \
+--do_snape 1 \
+--do_poolsnp 1 \
+--prep_reference 1 \
+-do_se \
+/standard/BerglandTeach/data/fastq/SRP002024/SRR036932.fastq.gz \
+SRR036932 \
+/scratch/aob2x/dest_v3_output/
+
 ```
 
 
