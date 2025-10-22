@@ -36,6 +36,7 @@ do_snape=1
 do_poolsnp=1
 ref_genome="path_to_ref_fasta"
 focalFile="path_to_focalFile_csv"
+prepRef=1
 
 ### Parse positional arguments
 # Credit: https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
@@ -158,6 +159,9 @@ done
 #################
 ### prepare reference genome
 ### module load samtools bwa picard
+echo $prepRef
+echo $do_poolsnp
+echo $do_snape
 if [ $prepRef -eq "1" ] && [ $do_poolsnp -eq "1" ]; then
   echo "Cannot prep ref and run mapping at once"
   exit 1
@@ -186,7 +190,7 @@ if [ $prepRef -eq "1" ]; then
      refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
      samtools faidx ${ref} ${chrs} > ${refOut}
 
-     python /opt/DESTv3/mappingPipeline/scripts/PickleRef.py \
+     python3 /opt/DESTv3/mappingPipeline/scripts/PickleRef.py \
          --ref ${refOut} \
          --output ${refOut}
   done < ${focalFile}
