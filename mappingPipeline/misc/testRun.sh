@@ -12,8 +12,8 @@
 
 
 ### run as: sbatch /home/aob2x/DESTv3/mappingPipeline/misc/testRun.sh
-### sacct -j XXXXXXXXX
-### cat /scratch/COMPUTE_ID/logs/demo_1.*.err
+### sacct -j 4841893
+### cat /scratch/aob2x/logs/RunDest.4841893*.out
 
 
 ### modules
@@ -30,7 +30,7 @@
   --focal_file /scratch/aob2x/tmpRef/focalFile.csv \
   --do_snape 1 \
   --do_poolsnp 1 \
-  -prepRef 0 \
+  --prep_reference 0 \
   -do_se \
   /standard/BerglandTeach/data/fastq/SRP002024/SRR036932.fastq.gz \
   SRR036932 \
