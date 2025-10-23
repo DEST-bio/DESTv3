@@ -21,6 +21,9 @@
 
   singularity run \
   /scratch/aob2x/dest_v3.sif  \
+  /standard/BerglandTeach/data/fastq/SRP002024/SRR036932.fastq.gz \
+  SRR036932 \
+  /scratch/aob2x/dest_v3_output/ \
   --cores 4 \
   --max-cov 0.95 \
   --min-cov 4 \
@@ -31,7 +34,4 @@
   --do_snape 1 \
   --do_poolsnp 1 \
   --prep_reference 0 \
-  -do_se \
-  /standard/BerglandTeach/data/fastq/SRP002024/SRR036932.fastq.gz \
-  SRR036932 \
-  /scratch/aob2x/dest_v3_output/
+  -do_se
