@@ -73,7 +73,7 @@ case $key in
     shift # past argument
     shift # past value
     ;;
-    -c|--cores)
+    -tr|--threads)
     threads="$2"
     shift # past argument
     shift # past value
@@ -223,7 +223,7 @@ set -- "${POSITIONAL[@]}"
 #     echo "ERROR: For paired end reads (default) you need to supply <fastq_file_1_path> <fastq_file_2_path> <sample_name> <output_dir> as positional arguments, and no others"
 #     exit 1
 # fi
-# 
+#
 # if [ $do_single_end -eq "1" ] && [ $# != 3 ]
 #   then
 #     echo "ERROR: For single end reads you need to supply <fastq_file_path> <sample_name> <output_dir> as positional arguments, and no others"
@@ -257,7 +257,7 @@ echo -e \
 "sample name =" $sample "\n" \
 "output =" $output "\n" \
 "number of flies =" $nflies "\n" \
-"cpus =" $thread "\n" \
+"cpus =" $threads "\n" \
 "max cov =" $max_cov "\n" \
 "min cov =" $min_cov "\n" \
 "theta =" $theta "\n" \
@@ -272,7 +272,7 @@ echo -e \
 "do snape? (0 = no; 1 = yes) -->" $do_snape "\n" \
 "do poolsnp? (0 = no; 1 = yes) -->" $do_poolsnp "\n" \
 "reference genome =" $ref "\n" \
-"focal chromosome file=" $focal_file "\n" \
+"focal chromosome file=" $focalFile "\n" \
 "prep ref?=" $prepRef "\n"
 
 ########
@@ -544,7 +544,7 @@ if [ $do_poolsnp -eq "1" ]; then
     echo "base-quality-threshold $base_quality_threshold" >> $output/$sample/${sample}.parameters.txt
     echo "illumina-quality-coding $illumina_quality_coding" >> $output/$sample/${sample}.parameters.txt
     echo "min-indel $minIndel" >> $output/$sample/${sample}.parameters.txt
-    echo "species prefix ${prefix}" >> >> $output/$sample/${sample}.parameters.txt
+    echo "species prefix ${prefix}" >> $output/$sample/${sample}.parameters.txt
   done < ${focalFile}
 fi
 
@@ -622,5 +622,7 @@ if [ $do_snape -eq "1" ]; then
     echo "theta:  $theta" >> $output/$sample/${sample}.parameters.txt
     echo "D:  $D" >> $output/$sample/${sample}.parameters.txt
     echo "priortype: $priortype" >> $output/$sample/${sample}.parameters.txt
+    echo "species prefix ${prefix}" >> $output/$sample/${sample}.parameters.txt
+
   done < ${focalFile}
 fi

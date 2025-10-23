@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 #SBATCH -J dockerMap # A single job name for the array
-#SBATCH -c 11 ### 20 cores
+#SBATCH -c 20 ### 20 cores
 #SBATCH -N 1 # on one node
 #SBATCH -t 72:00:00
 #SBATCH --mem 90G
@@ -12,8 +12,8 @@
 
 
 ### run as: sbatch /home/aob2x/DESTv3/mappingPipeline/misc/testRun.sh
-### sacct -j 4841893
-### cat /scratch/aob2x/logs/RunDest.4841893*.out
+### sacct -j 4841903
+### cat /scratch/aob2x/logs/RunDest.4841903*.err
 
 
 ### modules
@@ -34,4 +34,5 @@
   --do_snape 1 \
   --do_poolsnp 1 \
   --prep_reference 0 \
+  --threads 20 \
   -do_se
