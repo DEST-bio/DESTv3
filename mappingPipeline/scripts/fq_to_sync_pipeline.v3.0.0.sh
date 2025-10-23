@@ -218,17 +218,17 @@ set -- "${POSITIONAL[@]}"
 
 #### --> Evaluate whether the pipeline is being used as Paired end or single end
 
-if [ $do_single_end -eq "0" ] && [ $# != 4 ]
-  then
-    echo "ERROR: For paired end reads (default) you need to supply <fastq_file_1_path> <fastq_file_2_path> <sample_name> <output_dir> as positional arguments, and no others"
-    exit 1
-fi
-
-if [ $do_single_end -eq "1" ] && [ $# != 3 ]
-  then
-    echo "ERROR: For single end reads you need to supply <fastq_file_path> <sample_name> <output_dir> as positional arguments, and no others"
-    exit 1
-fi
+# if [ $do_single_end -eq "0" ] && [ $# != 4 ]
+#   then
+#     echo "ERROR: For paired end reads (default) you need to supply <fastq_file_1_path> <fastq_file_2_path> <sample_name> <output_dir> as positional arguments, and no others"
+#     exit 1
+# fi
+# 
+# if [ $do_single_end -eq "1" ] && [ $# != 3 ]
+#   then
+#     echo "ERROR: For single end reads you need to supply <fastq_file_path> <sample_name> <output_dir> as positional arguments, and no others"
+#     exit 1
+# fi
 
 ######
 
