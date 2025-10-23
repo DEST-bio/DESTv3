@@ -6,8 +6,9 @@ More flexibility on the reference genome.
 
 rebuild docker on local computer
 ```
-docker buildx create --use --name mybuilder
-docker buildx build --builder mybuilder --platform linux/amd64 -t dest_v3:latest --load -f Dockerfile.3.0.0 .
+cd ~/Documents/GitHub/DESTv3/mappingPipeline
+#docker buildx create --use --name mybuilder
+docker buildx build --builder mybuilder --platform linux/amd64 -t dest_v3:latest --no-cache -f Dockerfile.3.0.0 .
 docker buildx build --builder mybuilder --platform linux/amd64 -t alanbergland/dest_v3:latest --push -f Dockerfile.3.0.0 .
 ```
 
@@ -15,7 +16,7 @@ pull onto Rivanna
 ```
 ijob -A berglandlab -c4 -p standard --mem=20G
 module load apptainer/1.3.4
-#apptainer build /scratch/aob2x/dest_v3.sif docker://alanbergland/dest_v3:latest
+apptainer build -F /scratch/aob2x/dest_v3.sif docker://alanbergland/dest_v3:latest
 
 singularity run \
 /scratch/aob2x/dest_v3.sif  \
@@ -28,7 +29,6 @@ singularity run \
 --focal_file /scratch/aob2x/tmpRef/focalFile.csv \
 --do_snape 1 \
 --do_poolsnp 1 \
---prep_reference 1 \
 -do_se \
 /standard/BerglandTeach/data/fastq/SRP002024/SRR036932.fastq.gz \
 SRR036932 \
