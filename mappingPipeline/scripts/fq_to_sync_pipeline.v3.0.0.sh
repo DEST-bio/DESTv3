@@ -502,6 +502,7 @@ if [ $do_poolsnp -eq "1" ]; then
     -B \
     -Q ${base_quality_threshold} \
     -f ${refOut} > $output/$sample/${sample}.${prefix}_mpileup.txt
+    check_exit_status "mpileup" $?
 
     python3 /opt/DESTv3/mappingPipeline/scripts/Mpileup2Sync.py \
     --mpileup $output/$sample/${sample}.${prefix}_mpileup.txt \
