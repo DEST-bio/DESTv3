@@ -503,7 +503,7 @@ if [ $do_poolsnp -eq "1" ]; then
     -Q ${base_quality_threshold} \
     -f ${refOut} > $output/$sample/${sample}.${prefix}_mpileup.txt
 
-    python3 /opt/DESTv2/mappingPipeline/scripts/Mpileup2Sync.py \
+    python3 /opt/DESTv3/mappingPipeline/scripts/Mpileup2Sync.py \
     --mpileup $output/$sample/${sample}.${prefix}_mpileup.txt \
     --ref ${refOut}.ref \
     --output $output/$sample/${sample}.${prefix} \
@@ -514,7 +514,7 @@ if [ $do_poolsnp -eq "1" ]; then
     check_exit_status "Mpileup2Sync" $?
 
     #For the PoolSNP output
-    python3 /opt/DESTv2/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
+    python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
     --sync $output/$sample/${sample}.${prefix}.sync.gz \
     --output $output/$sample/${sample}.${prefix} \
     --indel $output/$sample/${sample}.${prefix}.indel \
@@ -571,14 +571,14 @@ if [ $do_snape -eq "1" ]; then
 
     gzip -f $output/$sample/${sample}.${prefix}.SNAPE.output.txt
 
-    python3 /opt/DESTv2/mappingPipeline/scripts/SNAPE2SYNC.py \
+    python3 /opt/DESTv3/mappingPipeline/scripts/SNAPE2SYNC.py \
     --input $output/$sample/${sample}.${prefix}.SNAPE.output.txt.gz \
     --ref ${refOut} \
     --output $output/$sample/${sample}.${prefix}.SNAPE
 
     check_exit_status "SNAPE2SYNC" $?
 
-    python3 /opt/DESTv2/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
+    python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
     --sync $output/$sample/${sample}.${prefix}.SNAPE.sync.gz \
     --output $output/$sample/${sample}.${prefix}.SNAPE.complete \
     --indel $output/$sample/${sample}.indel \
@@ -592,7 +592,7 @@ if [ $do_snape -eq "1" ]; then
 
     mv $output/$sample/${sample}.${prefix}.SNAPE.complete_masked.sync.gz $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
 
-    python3 /opt/DESTv2/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
+    python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
     --sync $output/$sample/${sample}.${prefix}.SNAPE.sync.gz \
     --output $output/$sample/${sample}.${prefix}.SNAPE.monomorphic \
     --indel $output/$sample/${sample}.indel \
