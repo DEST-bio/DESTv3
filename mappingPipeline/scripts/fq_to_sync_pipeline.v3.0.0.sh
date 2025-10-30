@@ -1,9 +1,9 @@
 #!/bin/bash
 
 ### Updated by Alan Bergland
-### Questions: contact me at aob2x@virginia.edu
 ## version=3.0
 ### Oct 20, 2025
+
 
 check_exit_status () {
   if [ ! "$2" -eq "0" ]; then

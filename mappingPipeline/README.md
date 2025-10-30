@@ -14,13 +14,16 @@ docker buildx build --builder mybuilder --platform linux/amd64 -t alanbergland/d
 
 pull onto Rivanna
 ```
-ijob -A berglandlab -c4 -p standard --mem=20G
+ijob -A berglandlab -c4 -p standard --mem=40G
 module load apptainer/1.3.4
 apptainer build -F /scratch/aob2x/dest_v3.sif docker://alanbergland/dest_v3:latest
 
 singularity run \
 /scratch/aob2x/dest_v3.sif  \
---cores 4 \
+/standard/BerglandTeach/data/fastq/SRP002024/SRR036932.fastq.gz \
+SRR036932 \
+/scratch/aob2x/dest_v3_output/ \
+--threads 4 \
 --max-cov 0.95 \
 --min-cov 4 \
 --base-quality-threshold 25 \
@@ -29,10 +32,9 @@ singularity run \
 --focal_file /scratch/aob2x/tmpRef/focalFile.csv \
 --do_snape 1 \
 --do_poolsnp 1 \
--do_se \
-/standard/BerglandTeach/data/fastq/SRP002024/SRR036932.fastq.gz \
-SRR036932 \
-/scratch/aob2x/dest_v3_output/
+-prepRef 0 \
+-do_se
+
 
 ```
 

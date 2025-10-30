@@ -141,7 +141,7 @@ threads=10
 
 ### get reads mapping to mitochondria
   inputFile=/project/berglandlab/DEST/dest_mapped/Cville/US_Vir_Cha_1_2018-11-29/US_Vir_Cha_1_2018-11-29.original.bam
-  samtools idxstats ${inputFile} | grep -E "mitochondrion_genom|sim_mtDNA" | cut -f1,2 | awk '{print $1"\t"1"\t"$2}' > /scratch/aob2x/DESTv2_unmapped_reads/mitoGenome.bed
+  samtools idxstats ${inputFile} | grep -E "mitochondrion_genome|sim_mtDNA" | cut -f1,2 | awk '{print $1"\t"1"\t"$2}' > /scratch/aob2x/DESTv2_unmapped_reads/mitoGenome.bed
   #sed -i '$d' /scratch/aob2x/DESTv2_unmapped_reads/mitoGenome.bed
 
   samtools view -@ 20 -L /scratch/aob2x/DESTv2_unmapped_reads/mitoGenome.bed /scratch/aob2x/dest/bam/${sample}.sorted_merged.bam -b > \
