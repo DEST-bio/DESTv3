@@ -11,9 +11,9 @@
 #SBATCH --account berglandlab
 
 
-### run as: sbatch /home/aob2x/DESTv3/mappingPipeline/misc/testRun.sh
-### sacct -j 4841903
-### cat /scratch/aob2x/logs/RunDest.4841903*.err
+### run as: sbatch /home/aob2x/DESTv3/examples/mapping/mapping.sh
+### sacct -j 5028913
+### cat /scratch/aob2x/logs/RunDest.5028913*.err
 
 
 module load apptainer/1.3.4
@@ -25,7 +25,7 @@ singularity run \
 /project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_2.fastq.gz \
 DE_Bad_Bro_1_2020-07-16 \
 /scratch/aob2x/dest_v3_output/ \
---threads 4 \
+--threads 20 \
 --max-cov 0.95 \
 --min-cov 4 \
 --base-quality-threshold 25 \
