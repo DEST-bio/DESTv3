@@ -12,7 +12,7 @@
 
 
 ### run as: sbatch /home/aob2x/DESTv3/examples/mapping/mapping.sh
-### sacct -j 5028913
+### sacct -j 5030638
 ### cat /scratch/aob2x/logs/RunDest.5028913*.err
 
 
