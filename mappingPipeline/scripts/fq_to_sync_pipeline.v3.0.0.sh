@@ -478,8 +478,14 @@ fi
      echo $prefix
      chrs=$( echo $p | cut -f2 -d',')
      echo $chrs
+     refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
 
      samtools view -@ $threads $output/$sample/${sample}.contaminated_realigned.bam ${chrs} -b > $output/$sample/${sample}.${prefix}.bam
+
+     #refOut=/scratch/aob2x/tmpRef/holo_dmel_6.12.sim.fa
+     samtools sort --reference ${refOut} -@ ${threads} --write-index -O BAM $output/$sample/${sample}.${prefix}.bam -o $output/$sample/${sample}.${prefix}.sort.bam
+     mv $output/$sample/${sample}.${prefix}.sort.bam $output/$sample/${sample}.${prefix}.bam
+
   done < ${focalFile}
 
   mv $output/$sample/${sample}.contaminated_realigned.bam  $output/$sample/${sample}.original.bam
