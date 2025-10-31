@@ -465,13 +465,7 @@ fi
 
   rm $output/$sample/${sample}.dedup.bam*
 
-  # samtools index $output/$sample/${sample}.contaminated_realigned.bam
-
-  #Number of reads mapping to simulans and mel
-  # grep -v "sim_" $output/$sample/${sample}.${sample}.original_idxstats.txt | awk -F '\t' '{sum+=$3;} END {print sum;}' > $output/$sample/${sample}.num_mel.txt
-  # grep "sim_" $output/$sample/${sample}.${sample}.original_idxstats.txt | awk -F '\t' '{sum+=$3;} END {print sum;}' > $output/$sample/${sample}.num_sim.txt
-
-  #Filter out the simulans contaminants
+  ### output and format bam files focusing on specific genomes
   while read p; do
      #prefix=mel
      prefix=$( echo $p | cut -f1 -d',')
@@ -483,8 +477,24 @@ fi
      samtools view -@ $threads $output/$sample/${sample}.contaminated_realigned.bam ${chrs} -b > $output/$sample/${sample}.${prefix}.bam
 
      #refOut=/scratch/aob2x/tmpRef/holo_dmel_6.12.sim.fa
-     samtools sort --reference ${refOut} -@ ${threads} --write-index -O BAM $output/$sample/${sample}.${prefix}.bam -o $output/$sample/${sample}.${prefix}.sort.bam
+     samtools sort --reference ${refOut} -@ ${threads} $output/$sample/${sample}.${prefix}.bam -o $output/$sample/${sample}.${prefix}.sort.bam
      mv $output/$sample/${sample}.${prefix}.sort.bam $output/$sample/${sample}.${prefix}.bam
+     samtools index $output/$sample/${sample}.${prefix}.bam
+
+     #samtools view -H $output/$sample/${sample}.${prefix}.bam > $output/$sample/${sample}.${prefix}.header.sam
+
+     #tail -n1 /scratch/aob2x/tmpRef/focalFile.csv | cut -f2 -d',' | tr ' ' '\n' > sim.chrs.tmp
+     #samtools view -H DE_Bad_Bro_1_2020-07-16.sim.bam > DE_Bad_Bro_1_2020-07-16.sim.header.sam
+
+     #head -n1 DE_Bad_Bro_1_2020-07-16.sim.header.sam > DE_Bad_Bro_1_2020-07-16.sim.header.new.sam
+     #while read c; do
+    #   grep -E "${c}[[:space:]]" DE_Bad_Bro_1_2020-07-16.sim.header.sam >> DE_Bad_Bro_1_2020-07-16.sim.header.new.sam
+     #done < sim.chrs.tmp
+     #cat DE_Bad_Bro_1_2020-07-16.sim.header.new.sam
+     #samtools reheader DE_Bad_Bro_1_2020-07-16.sim.header.new.sam DE_Bad_Bro_1_2020-07-16.sim.bam > DE_Bad_Bro_1_2020-07-16.sim.reheader.bam
+     #mv DE_Bad_Bro_1_2020-07-16.sim.reheader.bam DE_Bad_Bro_1_2020-07-16.sim.bam
+     #samtools sort DE_Bad_Bro_1_2020-07-16.sim.bam > DE_Bad_Bro_1_2020-07-16.sim.sort.bam
+     #samtools index DE_Bad_Bro_1_2020-07-16.sim.bam
 
   done < ${focalFile}
 
