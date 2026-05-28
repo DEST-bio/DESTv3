@@ -12,8 +12,13 @@
 ### load data
   #fai.fn="/Users/alanbergland/Documents/GitHub/DESTv3/snpCalling_dev/scatter_gather_annotate/holo_dmel_6.12.fa.fai"
   #focalFile.fn="/Users/alanbergland/Documents/GitHub/DESTv3/examples/mapping/focalFile"
-  #species <- "mel"
+  #species <- "snail"
   #nJobs <- 5000
+
+  fai.fn="/scratch/aob2x/snail/refGenome/GCF_037325665.1_US_GU_Lsax_2.0_genomic.fa.fai"
+  focalFile.fn="/scratch/aob2x/snail/focalFile"
+  nJobs=2000
+  species="snail"
   print(fai.fn)
   print(focalFile.fn)
 
