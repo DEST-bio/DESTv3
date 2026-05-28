@@ -23,7 +23,7 @@ module load apptainer/1.4.5
 ### prep reference genome
 
 singularity run \
-/scratch/aob2x/dest_v3.sif  \
+/project/berglandlab/multispecies_endemism/dest_v3.sif  \
 --fastq_1 /project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_1.fastq.gz \
 --fastq_2 /project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_2.fastq.gz \
 --sample_name DE_Bad_Bro_1_2020-07-16 \
